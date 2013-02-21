@@ -176,11 +176,19 @@ Ext.define( 'Deft.ioc.Injector',
 		return provider?
 	
 	###*
+	Allows to register Hook for complex provider resolving 
+	###
+	setResolveHook: ( func ) ->
+		@resolveHook = func
+		return @
+
+	###*
 	Resolve a dependency (by identifier) with the corresponding object instance or value.
 	
 	Optionally, the caller may specify the target instance (to be supplied to the dependency provider's factory function, if applicable).
 	###
-	resolve: ( identifier, targetInstance ) ->
+	resolve: ( identifier, targetInstance, targetConstructorParams ) ->
+		identifier = @resolveHook(identifier, targetInstance, targetConstructorParams)  if typeof (@resolveHook) is "function"
 		provider = @providers[ identifier ]
 		if provider?
 			return provider.resolve( targetInstance )
@@ -191,7 +199,7 @@ Ext.define( 'Deft.ioc.Injector',
 	###*
 	Inject dependencies (by their identifiers) into the target object instance.
 	###
-	inject: ( identifiers, targetInstance, targetInstanceIsInitialized = true ) ->
+	inject: ( identifiers, targetInstance, targetInstanceIsInitialized = true, targetConstructorParams ) ->
 
 		targetClass = Ext.getClassName( targetInstance )
 
@@ -211,7 +219,7 @@ Ext.define( 'Deft.ioc.Injector',
 			( key, value ) ->
 				targetProperty = if Ext.isArray( identifiers ) then value else key
 				identifier = value
-				resolvedValue = @resolve( identifier, targetInstance )
+				resolvedValue = @resolve( identifier, targetInstance, targetConstructorParams )
 				if targetProperty of targetInstance.config
 					Deft.Logger.log( "Injecting '#{ identifier }' into '#{ targetProperty }' config." )
 					injectConfig[ targetProperty ] = resolvedValue

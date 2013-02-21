@@ -27,7 +27,10 @@ Ext.define( 'Deft.mixin.Injectable',
 			createInjectionInterceptor = ->
 				return ->
 					if not @$injected
-						Deft.Injector.inject( @inject, @, false )
+						if arguments.length
+							Deft.Injector.inject( @inject, @, false, arguments[0] )
+						else
+							Deft.Injector.inject( @inject, @, false )
 						@$injected = true
 					return @callOverridden( arguments )
 		else
@@ -35,7 +38,10 @@ Ext.define( 'Deft.mixin.Injectable',
 			createInjectionInterceptor = ->
 				return ->
 					if not @$injected
-						Deft.Injector.inject( @inject, @, false )
+						if arguments.length
+							Deft.Injector.inject( @inject, @, false, arguments[0] )
+						else
+							Deft.Injector.inject( @inject, @, false )
 						@$injected = true
 					return @callParent( arguments )
 		
