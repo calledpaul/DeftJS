@@ -166,13 +166,24 @@ Ext.define('Deft.ioc.Injector', {
     return provider != null;
   },
   /**
+  	Allows to register Hook for complex provider resolving
+  */
+
+  setResolveHook: function(func) {
+    this.resolveHook = func;
+    return this;
+  },
+  /**
   	Resolve a dependency (by identifier) with the corresponding object instance or value.
   	
   	Optionally, the caller may specify the target instance (to be supplied to the dependency provider's factory function, if applicable).
   */
 
-  resolve: function(identifier, targetInstance) {
+  resolve: function(identifier, targetInstance, targetConstructorParams) {
     var provider;
+    if (typeof this.resolveHook === "function") {
+      identifier = this.resolveHook(identifier, targetInstance, targetConstructorParams);
+    }
     provider = this.providers[identifier];
     if (provider != null) {
       return provider.resolve(targetInstance);
@@ -186,7 +197,7 @@ Ext.define('Deft.ioc.Injector', {
   	Inject dependencies (by their identifiers) into the target object instance.
   */
 
-  inject: function(identifiers, targetInstance, targetInstanceIsInitialized) {
+  inject: function(identifiers, targetInstance, targetInstanceIsInitialized, targetConstructorParams) {
     var injectConfig, name, originalInitConfigFunction, setterFunctionName, stackMessage, targetClass, value;
     if (targetInstanceIsInitialized == null) {
       targetInstanceIsInitialized = true;
@@ -209,7 +220,7 @@ Ext.define('Deft.ioc.Injector', {
       var identifier, resolvedValue, targetProperty;
       targetProperty = Ext.isArray(identifiers) ? value : key;
       identifier = value;
-      resolvedValue = this.resolve(identifier, targetInstance);
+      resolvedValue = this.resolve(identifier, targetInstance, targetConstructorParams);
       if (targetProperty in targetInstance.config) {
         Deft.Logger.log("Injecting '" + identifier + "' into '" + targetProperty + "' config.");
         injectConfig[targetProperty] = resolvedValue;
