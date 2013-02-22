@@ -81,7 +81,7 @@ Open source under the [MIT License](http://en.wikipedia.org/wiki/MIT_License).
 */
 
 /**
-* Logger used by DeftJS. Output is shown in the console when using ext-dev/ext-all-dev.
+* Logger used by DeftJS. Output is displayed in the console when using ext-dev/ext-all-dev.
 * @private
 */
 
@@ -172,12 +172,12 @@ Ext.define('Deft.util.Function', {
           memo[key] = fn.apply(scope, arguments);
         }
         return memo[key];
-        /**
-        		* Retrieves the value for the specified object key and removes the pair from the object.
-        */
-
       };
     },
+    /**
+    		* Retrieves the value for the specified object key and removes the pair from the object.
+    */
+
     extract: function(object, key) {
       var value;
       value = object[key];
@@ -675,13 +675,24 @@ Ext.define('Deft.ioc.Injector', {
     return provider != null;
   },
   /**
+  	Allows to register Hook for complex provider resolving
+  */
+
+  setResolveHook: function(func) {
+    this.resolveHook = func;
+    return this;
+  },
+  /**
   	Resolve a dependency (by identifier) with the corresponding object instance or value.
   	
   	Optionally, the caller may specify the target instance (to be supplied to the dependency provider's factory function, if applicable).
   */
 
-  resolve: function(identifier, targetInstance) {
+  resolve: function(identifier, targetInstance, targetConstructorParams) {
     var provider;
+    if (typeof this.resolveHook === "function") {
+      identifier = this.resolveHook(identifier, targetInstance, targetConstructorParams);
+    }
     provider = this.providers[identifier];
     if (provider != null) {
       return provider.resolve(targetInstance);
@@ -695,7 +706,7 @@ Ext.define('Deft.ioc.Injector', {
   	Inject dependencies (by their identifiers) into the target object instance.
   */
 
-  inject: function(identifiers, targetInstance, targetInstanceIsInitialized) {
+  inject: function(identifiers, targetInstance, targetInstanceIsInitialized, targetConstructorParams) {
     var injectConfig, name, originalInitConfigFunction, setterFunctionName, stackMessage, targetClass, value;
     if (targetInstanceIsInitialized == null) {
       targetInstanceIsInitialized = true;
@@ -718,7 +729,7 @@ Ext.define('Deft.ioc.Injector', {
       var identifier, resolvedValue, targetProperty;
       targetProperty = Ext.isArray(identifiers) ? value : key;
       identifier = value;
-      resolvedValue = this.resolve(identifier, targetInstance);
+      resolvedValue = this.resolve(identifier, targetInstance, targetConstructorParams);
       if (targetProperty in targetInstance.config) {
         Deft.Logger.log("Injecting '" + identifier + "' into '" + targetProperty + "' config.");
         injectConfig[targetProperty] = resolvedValue;
@@ -777,7 +788,7 @@ Open source under the [MIT License](http://en.wikipedia.org/wiki/MIT_License).
 
 /**
 * A mixin that marks a class as participating in dependency injection. Used in conjunction with Deft.ioc.Injector.
-* @deprecated 0.8 Injections are now done automatically using class preprocessors.
+* @deprecated 0.8 Deft.mixin.Injectable has been deprecated and can now be omitted - simply use the \'inject\' class annotation on its own.
 */
 
 Ext.define('Deft.mixin.Injectable', {
@@ -795,7 +806,11 @@ Ext.define('Deft.mixin.Injectable', {
     createInjectionInterceptor = function() {
       return function() {
         if (!this.$injected) {
-          Deft.Injector.inject(this.inject, this, false);
+          if (arguments.length) {
+            Deft.Injector.inject(this.inject, this, false, arguments[0]);
+          } else {
+            Deft.Injector.inject(this.inject, this, false);
+          }
           this.$injected = true;
         }
         return this.callOverridden(arguments);
@@ -805,7 +820,11 @@ Ext.define('Deft.mixin.Injectable', {
     createInjectionInterceptor = function() {
       return function() {
         if (!this.$injected) {
-          Deft.Injector.inject(this.inject, this, false);
+          if (arguments.length) {
+            Deft.Injector.inject(this.inject, this, false, arguments[0]);
+          } else {
+            Deft.Injector.inject(this.inject, this, false);
+          }
           this.$injected = true;
         }
         return this.callParent(arguments);
@@ -1688,7 +1707,7 @@ Open source under the [MIT License](http://en.wikipedia.org/wiki/MIT_License).
 */
 
 /**
-* A lightweight Application template class.
+* A lightweight Application template class for use with Ext JS.
 */
 
 Ext.define('Deft.mvc.Application', {
@@ -1726,7 +1745,7 @@ Open source under the [MIT License](http://en.wikipedia.org/wiki/MIT_License).
 
 /**
 * A mixin that creates and attaches the specified view controller(s) to the target view. Used in conjunction with Deft.mvc.ViewController.
-* @deprecated 0.8 ViewController attachemnt is now done automatically using class preprocessors.
+* @deprecated 0.8 Deft.mixin.Controllable has been deprecated and can now be omitted - simply use the \'controller\' class annotation on its own.
 */
 
 Ext.define('Deft.mixin.Controllable', {
